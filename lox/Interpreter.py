@@ -23,7 +23,7 @@ class Interpreter(expressions.ExprVisitor, statements.StmtVisitor):
         super().__init__()
         self.environment = Environment()
 
-    def evaluate(self, expr):
+    def evaluate(self, expr: expressions.Expr):
         return expr.accept(self)
 
     def execute(self, stmt: statements.Stmt):
@@ -149,7 +149,7 @@ class Interpreter(expressions.ExprVisitor, statements.StmtVisitor):
     def stringify(self, object):
         if object is None:
             return "nil"
-        if type(object) == float:
+        if isinstance(object, float):
             text = str(object)
             if text[-2:] == ".0":
                 text = text[:-2]
@@ -157,10 +157,10 @@ class Interpreter(expressions.ExprVisitor, statements.StmtVisitor):
         return str(object)
 
     def visit_assign_expr(self, expr):
-        pass
+        super().visit_assign_expr(expr)
 
     def visit_call_expr(self, expr):
-        pass
+        super().visit_call_expr(expr)
 
     def visit_get_expr(self, expr):
         return super().visit_get_expr(expr)
@@ -176,6 +176,3 @@ class Interpreter(expressions.ExprVisitor, statements.StmtVisitor):
 
     def visit_this_expr(self, expr):
         return super().visit_this_expr(expr)
-
-    def visit_variable_expr(self, expr):
-        return super().visit_variable_expr(expr)
