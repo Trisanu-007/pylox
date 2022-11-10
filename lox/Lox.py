@@ -53,7 +53,7 @@ class Lox:
     @staticmethod
     def run_prompt():
         while True:
-            line = input("> ")
+            line = input(">> ")
             if line is None or line == "exit":
                 break
 

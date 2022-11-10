@@ -41,6 +41,11 @@ STATEMENTS: ASTDict = {
     "Expression": ("expression: Expr",),
     "Print": ("expression: Expr",),
     "Var": ("name: Token", "initializer: Expr"),
+    "Block": ("statements: List[Expr]",),
+    "If": ("condition: Expr, then_branch: Stmt, else_branch: Optional[Stmt]",),
+    "While": ("condition: Expr, body: Stmt",),
+    "Function": ("name: Token, params: List[Token], body: List[Stmt]",),
+    "Return": ("keyword: Token, value: Expr",),
 }
 
 INDENTATION = "    "

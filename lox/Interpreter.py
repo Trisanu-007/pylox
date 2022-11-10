@@ -4,6 +4,10 @@ from TokenType import TokenType
 from Token import Token
 import statements
 from Environment import Environment
+from LoxCallable import LoxCallable
+from LoxClock import Clock
+from LoxFunction import LoxFunction
+from LoxReturn import ReturnException
 
 
 class LoxRuntimeError(RuntimeError):
@@ -21,7 +25,9 @@ class LoxRuntimeError(RuntimeError):
 class Interpreter(expressions.ExprVisitor, statements.StmtVisitor):
     def __init__(self) -> None:
         super().__init__()
-        self.environment = Environment()
+        self.globals = Environment()
+        self.environment = self.globals
+        self.globals.define("clock", Clock())
 
     def evaluate(self, expr: expressions.Expr):
         return expr.accept(self)
@@ -35,6 +41,26 @@ class Interpreter(expressions.ExprVisitor, statements.StmtVisitor):
         if type(obj) == bool:
             return bool(obj)
         return True
+
+    def execute_block(
+        self, statements: List[statements.Stmt], environment: Environment
+    ):
+        previous = self.environment
+        try:
+            self.environment = environment
+            for statement in statements:
+                self.execute(statement)
+        finally:
+            self.environment = previous
+
+    def visit_if_stmt(self, stmt: statements.If):
+        if self.is_truthy(self.evaluate(stmt.condition)):
+            self.execute(stmt.then_branch)
+        elif stmt.else_branch is not None:
+            self.execute(stmt.else_branch)
+
+    def visit_block_stmt(self, stmt: statements.Block):
+        self.execute_block(stmt.statements, Environment(self.environment))
 
     def visit_expression_stmt(self, expr: statements.Expression):
         self.evaluate(expr.expression)
@@ -139,6 +165,10 @@ class Interpreter(expressions.ExprVisitor, statements.StmtVisitor):
 
         return None
 
+    def visit_function_stmt(self, stmt: statements.Stmt):
+        function = LoxFunction(stmt)
+        self.environment.define(stmt.name.lexeme, function)
+
     def interpret(self, statements: List[statements.Stmt]):
         try:
             for stmt in statements:
@@ -156,17 +186,58 @@ class Interpreter(expressions.ExprVisitor, statements.StmtVisitor):
             return text
         return str(object)
 
-    def visit_assign_expr(self, expr):
-        super().visit_assign_expr(expr)
+    def visit_assign_expr(self, expr: expressions.Assign):
+        value = self.evaluate(expr.value)
+        self.environment.assign(expr.name, value)
+        return value
 
-    def visit_call_expr(self, expr):
-        super().visit_call_expr(expr)
+    def visit_while_stmt(self, stmt: statements.While):
+        while self.is_truthy(self.evaluate(stmt.condition)):
+            self.execute(stmt.body)
+
+    def visit_call_expr(self, expr: expressions.Call):
+        callee = self.evaluate(expr.callee)
+        arguments = []
+        for argument in expr.arguments:
+            arguments.append(self.evaluate(argument))
+
+        if not isinstance(callee, LoxCallable):
+            raise LoxRuntimeError(expr.paren, "Can only call functions and classes.")
+
+        function: LoxCallable = callee
+        if len(arguments) != function.arity():
+            raise LoxRuntimeError(
+                expr.paren,
+                "Expected "
+                + function.arity()
+                + " arguments but got "
+                + arguments.size()
+                + ".",
+            )
+
+        return function.call(self, arguments)
+
+    def visit_return_stmt(self, stmt: statements.Return):
+        value = None
+        if stmt.value is not None:
+            value = self.evaluate(stmt.value)
+
+        raise ReturnException(value)
 
     def visit_get_expr(self, expr):
         return super().visit_get_expr(expr)
 
-    def visit_logical_expr(self, expr):
-        return super().visit_logical_expr(expr)
+    def visit_logical_expr(self, expr: expressions.Logical):
+        left = self.evaluate(expr.left)
+
+        if expr.operator.type == TokenType.OR:
+            if self.is_truthy(left):
+                return left
+            else:
+                if not self.is_truthy(left):
+                    return left
+
+            return self.evaluate(expr.right)
 
     def visit_set_expr(self, expr):
         return super().visit_set_expr(expr)
