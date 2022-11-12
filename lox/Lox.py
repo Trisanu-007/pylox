@@ -4,6 +4,7 @@ from Parser import Parser, ParseError
 from ast_printer import ASTPrinter
 from Interpreter import Interpreter
 from pathlib import Path
+from Resolver import Resolver
 
 
 class Lox:
@@ -37,7 +38,15 @@ class Lox:
         if Lox.had_error:
             return
 
-        Lox.interpreter.interpret(statements=statements)
+        # Lox.interpreter.interpret(statements=statements)
+        interpreter = Interpreter()
+        resolver = Resolver(interpreter=interpreter, on_error=Lox.error)
+        resolver.resolve(statements=statements)
+
+        if Lox.had_error:
+            return
+
+        interpreter.interpret(statements=statements)
 
     @staticmethod
     def run_file(filename):

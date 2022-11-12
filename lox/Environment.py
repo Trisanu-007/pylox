@@ -35,3 +35,16 @@ class Environment:
             return
 
         raise EnvironmentError(name, "Undefined variable '" + name.lexeme + "'.")
+
+    def ancestor(self, distance):
+        environment = self
+        for _ in range(distance):
+            environment = environment.enclosing
+
+        return environment
+
+    def get_at(self, distance, name):
+        return self.ancestor(distance).values.get(name)
+
+    def assign_at(self, distance, name, value):
+        self.ancestor(distance=distance).values[name.lexeme] = value

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from Token import Token
-from expressions import Expr
+from expressions import Expr, Variable
 
 
 class StmtVisitor(ABC):
@@ -95,3 +95,15 @@ class Return(Stmt):
 
     def accept(self, visitor: StmtVisitor) -> None:
         return visitor.visit_return_stmt(self)
+
+
+class Class(Stmt):
+    def __init__(
+        self, name: Token, methods: List[Function], superclass: Variable
+    ) -> None:
+        self.name = name
+        self.methods = methods
+        self.superclass = superclass
+
+    def accept(self, visitor: StmtVisitor) -> None:
+        return visitor.visit_class_stmt(self)

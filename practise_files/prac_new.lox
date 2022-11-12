@@ -1,0 +1,5 @@
+fun myFunc(new_type, second_type) {
+    print "Inside new function";
+}
+
+myFunc("hello", "new");
