@@ -46,6 +46,9 @@ STATEMENTS: ASTDict = {
     "While": ("condition: Expr, body: Stmt",),
     "Function": ("name: Token, params: List[Token], body: List[Stmt]",),
     "Return": ("keyword: Token, value: Expr",),
+    "Class": (
+        "name: Token, methods: List[Function], superclass: expressions.Variable",
+    ),
 }
 
 INDENTATION = "    "
